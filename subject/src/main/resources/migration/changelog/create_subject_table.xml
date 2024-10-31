@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="1" author="trangbt">
+        <createTable tableName="subject">
+            <column name="subject_id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="subject_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="credit" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="department_id" type="INT"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="2" author="trangbt">
+        <createTable tableName="subject_lecturer">
+            <column name="subject_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lecturer_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey columnNames="subject_id, lecturer_id" tableName="subject_lecturer" constraintName="pk_subject_lecturer"/>
+
+        <!-- Ràng buộc với bảng subject -->
+        <addForeignKeyConstraint baseTableName="subject_lecturer"
+                                 baseColumnNames="subject_id"
+                                 referencedTableName="subject"
+                                 referencedColumnNames="subject_id"
+                                 constraintName="fk_subject_lecturer_subject"/>
+    </changeSet>
+
+</databaseChangeLog>

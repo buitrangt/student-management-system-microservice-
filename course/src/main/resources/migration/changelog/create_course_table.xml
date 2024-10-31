@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="1" author="yourname">
+        <createTable tableName="course">
+            <column name="course_id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="subject_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lecturer_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="semester" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="academic_year" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="course_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="2" author="yourname">
+        <createTable tableName="student_course">
+            <column name="student_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="course_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey columnNames="student_id, course_id" tableName="student_course" constraintName="pk_student_course"/>
+
+        <addForeignKeyConstraint baseTableName="student_course"
+                                 baseColumnNames="course_id"
+                                 referencedTableName="course"
+                                 referencedColumnNames="course_id"
+                                 constraintName="fk_student_course_course"/>
+    </changeSet>
+
+</databaseChangeLog>

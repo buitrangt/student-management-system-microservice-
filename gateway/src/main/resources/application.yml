@@ -1,0 +1,114 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  datasource:
+    url: jdbc:mysql://localhost:3306/gateway
+    username: root
+    password: Trang@12345
+  main:
+    allow-bean-definition-overriding: true
+
+
+
+  liquibase:
+    change-log: classpath:migration/master-changelog.xml
+
+
+
+  cloud:
+    gateway:
+      routes:
+        - id: course-service-route
+          uri: lb://COURSE-SERVICE
+          predicates:
+            - Path=/api/v1/courses
+          filters:
+            - StripPrefix=2
+        - id: student-service-route
+          uri: lb://STUDENT-SERVICE
+          predicates:
+            - Path=/api/v1/students
+          filters:
+            - StripPrefix=2
+        - id: attendance-service-route
+          uri: lb://ATTENDANCE-SERVICE
+          predicates:
+            - Path=/api/v1/attendances
+          filters:
+            - StripPrefix=2
+        - id: grade-service-route
+          uri: lb://GRADE-SERVICE
+          predicates:
+            - Path=/api/v1/grades
+          filters:
+            - StripPrefix=2
+        - id: subject-service-route
+          uri: lb://SUBJECT-SERVICE
+          predicates:
+            - Path=/api/v1/subjects
+          filters:
+            - StripPrefix=2
+        - id: lecture-service-route
+          uri: lb://SUBJECT-SERVICE
+          predicates:
+            - Path=/api/v1/lectures
+          filters:
+            - StripPrefix=2
+        - id: class-service-route
+          uri: lb://CLASS-SERVICE
+          predicates:
+            - Path=/api/v1/classes
+          filters:
+            - StripPrefix=2
+        - id: department-service-route
+          uri: lb://DEPARTMENT-SERVICE
+          predicates:
+            - Path=/api/v1/departments
+          filters:
+            - StripPrefix=2
+        - id: studentcourse-service-route
+          uri: lb://COURSE-SERVICE
+          predicates:
+            - Path=/api/v1/studentcourses
+          filters:
+            - StripPrefix=2
+        - id: subjectlecturer-service-route
+          uri: lb://SUBJECT-SERVICE
+          predicates:
+            - Path=/api/v1/subjectlecturers
+          filters:
+            - StripPrefix=2
+        - id: auth-service-login-route
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/api/v1/users/login
+          filters:
+            - StripPrefix=2
+        - id: auth-service-register-route
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/api/v1/users/register
+          filters:
+            - StripPrefix=2
+        - id: auth-service-verify-token-route
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/api/v1/users/verify-token
+          filters:
+            - StripPrefix=2
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+    fetchRegistry: true
+    registerWithEureka: true
+
+Secret: 03295e54e2aa5f1f5ca7bc3762f3a35684ae625d64cc644534e2ce8504a46539
+
+auth:
+  service:
+    url:
