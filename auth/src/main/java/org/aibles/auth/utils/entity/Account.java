@@ -47,6 +47,10 @@ public class Account {
     @Column(name = "lock_permanent", nullable = false)
     private boolean lockPermanent = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private Role role = Role.STUDENT;
+
 
 
 }

@@ -17,10 +17,10 @@ public class Permission {
     private String name;
 
     @Column(name = "resource", nullable = false)
-    private String resource; // Ví dụ: /api/v1/students
+    private String resource;
 
     @Column(name = "method", nullable = false)
-    private String method; // Ví dụ: GET, POST
+    private String method;
 
     @Column(name = "description")
     private String description;

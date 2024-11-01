@@ -7,5 +7,5 @@ public interface PermissionService {
     Permission findPermission(String resource, String method);
     Permission savePermission(Permission permission);
 
-    Mono<Permission> findPermissionByRoleAndResource(Long roleId, String resource, String method);
+    boolean hasAccess(Long roleId, String resource, String method);
 }

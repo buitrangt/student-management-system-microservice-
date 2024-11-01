@@ -50,6 +50,21 @@ public class AuthenFilter implements WebFilter {
 
         String jwtToken = accessToken.substring(7);
 
+        if (!verifyTokenWithAuthService(jwtToken)) {
+            log.warn("Invalid token, access denied.");
+            response.setStatusCode(HttpStatus.UNAUTHORIZED);
+            return response.setComplete();
+        }
+
+        ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
+                .header("X-Original-Token", accessToken)
+                .build();
+
+        ServerWebExchange modifiedExchange = exchange.mutate().request(modifiedRequest).build();
+        return chain.filter(modifiedExchange);
+    }
+
+    private boolean verifyTokenWithAuthService(String jwtToken) {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -66,26 +81,10 @@ public class AuthenFilter implements WebFilter {
                     TokenVerificationResponse.class
             );
 
-            if (authResponse.getBody() != null && authResponse.getBody().getData().isValid()) {
-                String userId = authResponse.getBody().getData().getUserId(); // Lấy userId từ phản hồi
-                log.info("Token is valid. User ID: {}", userId);
-
-                ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
-                        .header("user_id", userId)
-                        .build();
-                ServerWebExchange modifiedExchange = exchange.mutate().request(modifiedRequest).build();
-
-                return chain.filter(modifiedExchange);
-            } else {
-                log.warn("Invalid token, access denied.");
-                response.setStatusCode(HttpStatus.UNAUTHORIZED);
-                return response.setComplete();
-            }
-
+            return authResponse.getBody() != null && authResponse.getBody().getData().isValid();
         } catch (Exception e) {
             log.error("Failed to authenticate token: {}", e.getMessage());
-            response.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
-            return response.setComplete();
+            return false;
         }
     }
 }

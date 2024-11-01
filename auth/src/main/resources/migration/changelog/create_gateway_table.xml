@@ -60,6 +60,9 @@
             <column name="created_at" type="BIGINT">
                 <constraints nullable="true"/>
             </column>
+            <column name="role" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
             <column name="last_updated_by" type="VARCHAR(255)"/>
             <column name="last_updated_at" type="BIGINT"/>
             <column name="lock_permanent" type="BOOLEAN" defaultValue="false">

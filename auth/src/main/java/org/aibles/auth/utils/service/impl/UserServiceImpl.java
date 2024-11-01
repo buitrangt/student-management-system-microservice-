@@ -51,42 +51,42 @@ public class UserServiceImpl implements UserService {
         log.info("Student account created");
 
         // Gọi Student Service để tạo Student
-        createStudentInStudentService(student.getUserId(), student);
+    //    createStudentInStudentService(student.getUserId(), student);
 
         log.info("Student registered successfully for username: {}", account.getUsername());
     }
     /**
      * Phương thức gọi đến Student Service để tạo bản ghi Student, sử dụng trực tiếp đối tượng User.
      */
-    private void createStudentInStudentService(String userId, User student) {
-        String studentServiceUrl = "http://localhost:8087/api/v1/students";
-
-        // Tạo StudentRequest với các thông tin cần thiết
-        StudentRequest studentRequest = new StudentRequest();
-        studentRequest.setUserId(userId);
-        studentRequest.setFullName(student.getFullName());
-        studentRequest.setEmail(student.getEmail());
-        studentRequest.setClassId(student.getClassId());
-
-        // Kiểm tra các trường có giá trị null và ghi log cảnh báo
-        if (student.getFullName() == null || student.getEmail() == null || student.getClassId() == null) {
-            log.warn("(createStudentInStudentService) Some fields are null: fullName={}, email={}, classId={}",
-                    student.getFullName(), student.getEmail(), student.getClassId());
-        }
-
-        // Tạo HttpEntity với header và body
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<StudentRequest> requestEntity = new HttpEntity<>(studentRequest, headers);
-
-        try {
-            restTemplate.postForObject(studentServiceUrl, requestEntity, Void.class);
-            log.info("Successfully created student in Student Service for userId: {}", userId);
-        } catch (Exception e) {
-            log.error("Failed to create student in Student Service for userId: {}", userId, e);
-            throw new RuntimeException("Failed to create student in Student Service", e);
-        }
-    }
+//    private void createStudentInStudentService(String userId, User student) {
+//        String studentServiceUrl = "http://localhost:8087/api/v1/students";
+//
+//        // Tạo StudentRequest với các thông tin cần thiết
+//        StudentRequest studentRequest = new StudentRequest();
+//        studentRequest.setUserId(userId);
+//        studentRequest.setFullName(student.getFullName());
+//        studentRequest.setEmail(student.getEmail());
+//        studentRequest.setClassId(student.getClassId());
+//
+//        // Kiểm tra các trường có giá trị null và ghi log cảnh báo
+//        if (student.getFullName() == null || student.getEmail() == null || student.getClassId() == null) {
+//            log.warn("(createStudentInStudentService) Some fields are null: fullName={}, email={}, classId={}",
+//                    student.getFullName(), student.getEmail(), student.getClassId());
+//        }
+//
+//        // Tạo HttpEntity với header và body
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setContentType(MediaType.APPLICATION_JSON);
+//        HttpEntity<StudentRequest> requestEntity = new HttpEntity<>(studentRequest, headers);
+//
+//        try {
+//            restTemplate.postForObject(studentServiceUrl, requestEntity, Void.class);
+//            log.info("Successfully created student in Student Service for userId: {}", userId);
+//        } catch (Exception e) {
+//            log.error("Failed to create student in Student Service for userId: {}", userId, e);
+//            throw new RuntimeException("Failed to create student in Student Service", e);
+//        }
+//    }
 
 
 

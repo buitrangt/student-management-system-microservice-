@@ -34,7 +34,7 @@ public class RouteConfig {
                         .uri("lb://SUBJECT-SERVICE"))
                 .route("auth-service-login-route", r -> r.path("/api/v1/users/login")
                         .uri("lb://AUTH-SERVICE"))
-                .route("auth-service-register-route", r -> r.path("/api/v1/users/register")
+                .route("auth-service-register-route", r -> r.path("/api/v1/users/register/**")
                         .uri("lb://AUTH-SERVICE"))
                 .route("auth-service-verify-token-route", r -> r.path("/api/v1/users/verify-token")
                         .uri("lb://AUTH-SERVICE"))

@@ -1,59 +1,62 @@
 package org.aibles.student.filter;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.aibles.student.entity.Permission;
 import org.aibles.student.service.PermissionService;
-import org.aibles.student.service.UserRoleService;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.server.WebFilter;
-import org.springframework.web.server.WebFilterChain;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class AuthorizationFilter implements WebFilter {
+public class AuthorizationFilter extends OncePerRequestFilter {
 
     private final PermissionService permissionService;
-    private final UserRoleService userRoleService;
+    @Value("${Secret}")
+    private String jwtSecret;
 
     @Override
-    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        String userId = exchange.getRequest().getHeaders().getFirst("user_id");
-        String path = exchange.getRequest().getURI().getPath();
-        String method = exchange.getRequest().getMethod().name();
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
 
+        String token = request.getHeader("X-Original-Token");
 
-
-        if (userId == null) {
-            log.warn("Missing user_id in header.");
-            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            return exchange.getResponse().setComplete();
+        if (token == null || !token.startsWith("Bearer ")) {
+            log.warn("Authorization token missing or invalid format.");
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            return;
         }
 
-        return checkUserPermission(userId, path, method)
-                .flatMap(hasPermission -> {
-                    if (hasPermission) {
-                        return chain.filter(exchange);
-                    } else {
-                        log.warn("User {} does not have permission to access {} {}", userId, method, path);
-                        exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
-                        return exchange.getResponse().setComplete();
-                    }
-                });
+        String jwtToken = token.substring(7);
+        Long roleId;
+        try {
+            Claims claims = Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(jwtToken).getBody();
+            roleId = claims.get("roleId", Long.class);
+        } catch (Exception e) {
+            log.error("Failed to decode token", e);
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            return;
+        }
+
+        String resource = request.getRequestURI();
+        String method = request.getMethod();
+
+        if (!permissionService.hasAccess(roleId, resource, method)) {
+            log.warn("Role ID '{}' does not have permission to access {} {}", roleId, method, resource);
+            response.setStatus(HttpStatus.FORBIDDEN.value());
+            return;
+        }
+
+        filterChain.doFilter(request, response);
     }
-
-    private Mono<Boolean> checkUserPermission(String userId, String resource, String method) {
-        return Mono.fromSupplier(() -> userRoleService.findRolesByUserId(userId))
-                .flatMapMany(roles -> Flux.fromIterable(roles))
-                .flatMap(role -> permissionService.findPermissionByRoleAndResource(role.getId(), resource, method))
-                .hasElements();
-    }
-
-
-
 }

@@ -21,11 +21,6 @@ public class RolePermissionServiceImpl implements RolePermissionService {
     }
 
     @Override
-    public List<RolePermission> findPermissionsByRoleId(Long roleId) {
-        return rolePermissionRepository.findByRoleId(roleId);
-    }
-
-    @Override
     public RolePermission saveRolePermission(RolePermission rolePermission) {
         return rolePermissionRepository.save(rolePermission);
     }

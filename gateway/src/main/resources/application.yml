@@ -4,17 +4,12 @@ server:
 spring:
   application:
     name: api-gateway
-  datasource:
-    url: jdbc:mysql://localhost:3306/gateway
-    username: root
-    password: Trang@12345
+
   main:
     allow-bean-definition-overriding: true
 
 
 
-  liquibase:
-    change-log: classpath:migration/master-changelog.xml
 
 
 
@@ -90,7 +85,7 @@ spring:
         - id: auth-service-register-route
           uri: lb://AUTH-SERVICE
           predicates:
-            - Path=/api/v1/users/register
+            - Path=/api/v1/users/register/**
           filters:
             - StripPrefix=2
         - id: auth-service-verify-token-route
@@ -109,6 +104,4 @@ eureka:
 
 Secret: 03295e54e2aa5f1f5ca7bc3762f3a35684ae625d64cc644534e2ce8504a46539
 
-auth:
-  service:
-    url:
+

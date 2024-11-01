@@ -14,7 +14,7 @@ public class UserRole {
     private Long id;
 
     @Column(name = "user_id", nullable = false)
-    private String userId; // Liên kết với userId trong bảng Student
+    private String userId;
 
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)

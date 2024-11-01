@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.extern.slf4j.Slf4j;
 import org.aibles.auth.utils.dto.VerifyTokenRequest;
 import org.aibles.auth.utils.dto.VerifyTokenResponse;
 import org.aibles.auth.utils.entity.Account;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 
 @Service
+@Slf4j
 public class JWTServiceImpl implements JWTService {
     @Value("${Secret}")
     private String jwtSecret;
@@ -26,8 +28,9 @@ public class JWTServiceImpl implements JWTService {
     @Override
     public String generateAccessToken(Account account) {
         return Jwts.builder()
-                .setSubject(account.getUserId()) // Đặt `accountId` (hoặc `userId`) vào `subject`
-                .claim("username", account.getUsername()) // Lưu `username` vào một claim riêng nếu cần
+                .setSubject(account.getUserId())
+                .claim("username", account.getUsername())
+                .claim("role", account.getRole().name())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
                 .signWith(SignatureAlgorithm.HS256, jwtSecret)
@@ -37,8 +40,9 @@ public class JWTServiceImpl implements JWTService {
     @Override
     public String generateRefreshToken(Account account) {
         return Jwts.builder()
-                .setSubject(account.getUserId()) // Đặt `accountId` (hoặc `userId`) vào `subject`
-                .claim("username", account.getUsername()) // Lưu `username` vào một claim riêng nếu cần
+                .setSubject(account.getUserId())
+                .claim("username", account.getUsername())
+                .claim("role", account.getRole().name())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
                 .signWith(SignatureAlgorithm.HS256, jwtSecret)
@@ -54,13 +58,13 @@ public class JWTServiceImpl implements JWTService {
                     .getBody();
 
             boolean isValid = !claims.getExpiration().before(new Date());
-            String userId = claims.getSubject(); // Giả sử userId được lưu trong `subject`
-
-            return new VerifyTokenResponse(isValid, isValid ? "Token is valid" : "Token has expired", userId);
+            return new VerifyTokenResponse(isValid, isValid ? "Token is valid" : "Token has expired");
         } catch (JwtException | IllegalArgumentException e) {
-            return new VerifyTokenResponse(false, "Invalid token", null);
+            log.info("Token verification failed: {}", e.getMessage()); // log chi tiết lỗi
+            return new VerifyTokenResponse(false, "Invalid token");
         }
     }
+
 
 
 }
