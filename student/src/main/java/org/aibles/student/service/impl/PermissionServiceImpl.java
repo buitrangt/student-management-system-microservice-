@@ -1,7 +1,9 @@
 package org.aibles.student.service.impl;
 import org.aibles.student.entity.Permission;
+import org.aibles.student.entity.Role;
 import org.aibles.student.repository.PermissionRepository;
 import org.aibles.student.repository.RolePermissionRepository;
+import org.aibles.student.repository.RoleRepository;
 import org.aibles.student.service.PermissionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,11 +15,13 @@ public class PermissionServiceImpl implements PermissionService {
 
     private final PermissionRepository permissionRepository;
     private final RolePermissionRepository rolePermissionRepository;
+    private final RoleRepository roleRepository;
 
     @Autowired
-    public PermissionServiceImpl(PermissionRepository permissionRepository, RolePermissionRepository rolePermissionRepository) {
+    public PermissionServiceImpl(PermissionRepository permissionRepository, RolePermissionRepository rolePermissionRepository,RoleRepository roleRepository) {
         this.permissionRepository = permissionRepository;
         this.rolePermissionRepository = rolePermissionRepository;
+        this.roleRepository = roleRepository;
     }
 
     @Override
@@ -38,4 +42,11 @@ public class PermissionServiceImpl implements PermissionService {
         // Kiểm tra xem roleId có quyền truy cập permission này không
         return permission != null && rolePermissionRepository.existsByRoleIdAndPermissionId(roleId, permission.getId());
     }
+
+    @Override
+    public Long findRoleIdByRoleName(String roleName) {
+        Role role = roleRepository.findByName(roleName);
+        return role != null ? role.getId() : null;
+    }
+
 }

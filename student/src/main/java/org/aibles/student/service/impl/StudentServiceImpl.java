@@ -39,10 +39,11 @@ public class StudentServiceImpl implements StudentService {
         log.info("(createStudent) Start - studentRequestDTO: {}", studentRequestDTO);
 //
 //        // Kiểm tra sự tồn tại của classId thông qua RestTemplate
-//        checkClassExists(studentRequestDTO.getClassId());
+        checkClassExists(studentRequestDTO.getClassId());
 
         Student student = new Student();
-        student.setUserId(studentRequestDTO.getUserId());  // Gán userId từ Auth Service
+        student.setUserId(studentRequestDTO.getUserId());
+       // Gán userId từ Auth Service
         student.setFullName(studentRequestDTO.getFullName());
         student.setDateOfBirth(studentRequestDTO.getDateOfBirth());
         student.setGender(Student.Gender.valueOf(studentRequestDTO.getGender()));

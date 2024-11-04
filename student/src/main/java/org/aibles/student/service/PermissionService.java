@@ -8,4 +8,7 @@ public interface PermissionService {
     Permission savePermission(Permission permission);
 
     boolean hasAccess(Long roleId, String resource, String method);
+
+    Long findRoleIdByRoleName(String roleName);
+
 }
