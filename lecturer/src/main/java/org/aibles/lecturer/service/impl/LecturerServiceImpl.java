@@ -1,6 +1,5 @@
 package org.aibles.lecturer.service.impl;
 
-
 import lombok.extern.slf4j.Slf4j;
 import org.aibles.lecturer.dto.LecturerRequestDTO;
 import org.aibles.lecturer.dto.LecturerResponseDTO;
@@ -9,7 +8,7 @@ import org.aibles.lecturer.exception.BusinessException;
 import org.aibles.lecturer.exception.InstructorCode;
 import org.aibles.lecturer.repository.LecturerRepository;
 import org.aibles.lecturer.service.LecturerService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -25,11 +24,13 @@ public class LecturerServiceImpl implements LecturerService {
 
     private final LecturerRepository lecturerRepository;
     private final RestTemplate restTemplate;
+    private final String departmentServiceUrl;
 
-    @Autowired
-    public LecturerServiceImpl(LecturerRepository lecturerRepository, RestTemplate restTemplate) {
+    public LecturerServiceImpl(LecturerRepository lecturerRepository, RestTemplate restTemplate,
+                               @Value("${department.service.url}") String departmentServiceUrl) {
         this.lecturerRepository = lecturerRepository;
         this.restTemplate = restTemplate;
+        this.departmentServiceUrl = departmentServiceUrl;
     }
 
     @Transactional
@@ -39,7 +40,6 @@ public class LecturerServiceImpl implements LecturerService {
 
         validateLecturerRequest(lecturerRequestDTO);
 
-        // Kiểm tra sự tồn tại của departmentId thông qua RestTemplate
         checkDepartmentExists(lecturerRequestDTO.getDepartmentId());
 
         Lecturer lecturer = new Lecturer();
@@ -57,7 +57,7 @@ public class LecturerServiceImpl implements LecturerService {
     }
 
     private void checkDepartmentExists(Integer departmentId) {
-        String departmentUrl = "http://DEPARTMENT-SERVICE/api/v1/departments/" + departmentId;
+        String departmentUrl = departmentServiceUrl + "/" + departmentId;
         try {
             restTemplate.getForObject(departmentUrl, Object.class);
             log.info("(checkDepartmentExists) Department found - departmentId: {}", departmentId);
@@ -100,7 +100,6 @@ public class LecturerServiceImpl implements LecturerService {
 
         validateLecturerRequest(lecturerRequestDTO);
 
-        // Kiểm tra sự tồn tại của departmentId thông qua RestTemplate
         checkDepartmentExists(lecturerRequestDTO.getDepartmentId());
 
         Lecturer lecturer = lecturerRepository.findById(lecturerId)
@@ -170,4 +169,3 @@ public class LecturerServiceImpl implements LecturerService {
         return lecturerResponseDTO;
     }
 }
-
