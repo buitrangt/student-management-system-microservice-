@@ -10,7 +10,7 @@ import org.aibles.subject.exception.InstructorCode;
 import org.aibles.subject.exception.ResponseStatus;
 import org.aibles.subject.repository.SubjectLecturerRepository;
 import org.aibles.subject.service.SubjectLecturerService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -25,11 +25,16 @@ public class SubjectLecturerServiceImpl implements SubjectLecturerService {
 
     private final SubjectLecturerRepository subjectLecturerRepository;
     private final RestTemplate restTemplate;
+    private final String subjectServiceUrl;
+    private final String lecturerServiceUrl;
 
-    @Autowired
-    public SubjectLecturerServiceImpl(SubjectLecturerRepository subjectLecturerRepository, RestTemplate restTemplate) {
+    public SubjectLecturerServiceImpl(SubjectLecturerRepository subjectLecturerRepository, RestTemplate restTemplate,
+                                      @Value("${subject.service.url}") String subjectServiceUrl,
+                                      @Value("${lecturer.service.url}") String lecturerServiceUrl) {
         this.subjectLecturerRepository = subjectLecturerRepository;
         this.restTemplate = restTemplate;
+        this.subjectServiceUrl = subjectServiceUrl;
+        this.lecturerServiceUrl = lecturerServiceUrl;
     }
 
     @Override
@@ -38,8 +43,8 @@ public class SubjectLecturerServiceImpl implements SubjectLecturerService {
         validateSubjectLecturerRequestDTO(subjectLecturerRequestDTO);
         log.info("(createSubjectLecturer) Start - subjectLecturerRequestDTO: {}", subjectLecturerRequestDTO);
 
-        checkExistence("http://SUBJECT-SERVICE/api/v1/subjects/" + subjectLecturerRequestDTO.getSubjectId(), InstructorCode.SUBJECT_NOT_FOUND);
-        checkExistence("http://LECTURER-SERVICE/api/v1/lecturers/" + subjectLecturerRequestDTO.getLecturerId(), InstructorCode.LECTURER_NOT_FOUND);
+        checkExistence(subjectServiceUrl + "/" + subjectLecturerRequestDTO.getSubjectId(), InstructorCode.SUBJECT_NOT_FOUND);
+        checkExistence(lecturerServiceUrl + "/" + subjectLecturerRequestDTO.getLecturerId(), InstructorCode.LECTURER_NOT_FOUND);
 
         SubjectLecturer subjectLecturer = new SubjectLecturer();
         subjectLecturer.setSubjectId(subjectLecturerRequestDTO.getSubjectId());
@@ -55,13 +60,15 @@ public class SubjectLecturerServiceImpl implements SubjectLecturerService {
     private void checkExistence(String url, ResponseStatus errorCode) {
         try {
             restTemplate.getForObject(url, Object.class);
+            log.info("(checkExistence) Verified existence for URL: {}", url);
         } catch (HttpClientErrorException.NotFound e) {
+            log.error("(checkExistence) Resource not found for URL: {}", url);
             throw new BusinessException(errorCode);
         } catch (Exception e) {
+            log.error("(checkExistence) Error verifying existence for URL: {}", url, e);
             throw new BusinessException(InstructorCode.INTERNAL_SERVER_ERROR);
         }
     }
-
 
     @Override
     @Transactional(readOnly = true)
@@ -95,8 +102,8 @@ public class SubjectLecturerServiceImpl implements SubjectLecturerService {
         validateSubjectLecturerRequestDTO(subjectLecturerRequestDTO);
         log.info("(updateSubjectLecturer) Start - subjectId: {}, lecturerId: {}", id.getSubjectId(), id.getLecturerId());
 
-        checkExistence("http://SUBJECT-SERVICE/api/v1/subjects/" + subjectLecturerRequestDTO.getSubjectId(), InstructorCode.SUBJECT_NOT_FOUND);
-        checkExistence("http://LECTURER-SERVICE/api/v1/lecturers/" + subjectLecturerRequestDTO.getLecturerId(), InstructorCode.LECTURER_NOT_FOUND);
+        checkExistence(subjectServiceUrl + "/" + subjectLecturerRequestDTO.getSubjectId(), InstructorCode.SUBJECT_NOT_FOUND);
+        checkExistence(lecturerServiceUrl + "/" + subjectLecturerRequestDTO.getLecturerId(), InstructorCode.LECTURER_NOT_FOUND);
 
         SubjectLecturer subjectLecturer = subjectLecturerRepository.findById(id)
                 .orElseThrow(() -> {

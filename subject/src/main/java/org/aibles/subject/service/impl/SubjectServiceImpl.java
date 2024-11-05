@@ -1,6 +1,5 @@
 package org.aibles.subject.service.impl;
 
-
 import lombok.extern.slf4j.Slf4j;
 import org.aibles.subject.dto.SubjectRequestDTO;
 import org.aibles.subject.dto.SubjectResponseDTO;
@@ -9,7 +8,7 @@ import org.aibles.subject.exception.BusinessException;
 import org.aibles.subject.exception.InstructorCode;
 import org.aibles.subject.repository.SubjectRepository;
 import org.aibles.subject.service.SubjectService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -24,11 +23,13 @@ public class SubjectServiceImpl implements SubjectService {
 
     private final SubjectRepository subjectRepository;
     private final RestTemplate restTemplate;
+    private final String departmentServiceUrl;
 
-    @Autowired
-    public SubjectServiceImpl(SubjectRepository subjectRepository, RestTemplate restTemplate) {
+    public SubjectServiceImpl(SubjectRepository subjectRepository, RestTemplate restTemplate,
+                              @Value("${department.service.url}") String departmentServiceUrl) {
         this.subjectRepository = subjectRepository;
         this.restTemplate = restTemplate;
+        this.departmentServiceUrl = departmentServiceUrl;
     }
 
     @Override
@@ -36,7 +37,6 @@ public class SubjectServiceImpl implements SubjectService {
     public SubjectResponseDTO create(SubjectRequestDTO subjectRequestDTO) {
         log.info("(createSubject) Start - subjectRequestDTO: {}", subjectRequestDTO);
 
-        // Kiểm tra sự tồn tại của departmentId thông qua RestTemplate
         checkDepartmentExists(subjectRequestDTO.getDepartmentId());
 
         Subject subject = new Subject();
@@ -51,7 +51,7 @@ public class SubjectServiceImpl implements SubjectService {
     }
 
     private void checkDepartmentExists(Integer departmentId) {
-        String departmentUrl = "http://DEPARTMENT-SERVICE/api/v1/departments/" + departmentId;
+        String departmentUrl = departmentServiceUrl + "/" + departmentId;
         try {
             restTemplate.getForObject(departmentUrl, Object.class);
             log.info("(checkDepartmentExists) Department found - departmentId: {}", departmentId);
@@ -91,7 +91,6 @@ public class SubjectServiceImpl implements SubjectService {
     public SubjectResponseDTO update(int subjectId, SubjectRequestDTO subjectRequestDTO) {
         log.info("(updateSubject) Start - subjectId: {}", subjectId);
 
-        // Kiểm tra sự tồn tại của departmentId thông qua RestTemplate
         checkDepartmentExists(subjectRequestDTO.getDepartmentId());
 
         Subject subject = subjectRepository.findById(subjectId)
@@ -131,4 +130,3 @@ public class SubjectServiceImpl implements SubjectService {
         return subjectResponseDTO;
     }
 }
-
