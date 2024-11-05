@@ -32,22 +32,20 @@ public class AuthorizationFilter extends OncePerRequestFilter {
         String token = request.getHeader("X-Original-Token");
 
 
-        String jwtToken = token.substring(7); // Bỏ prefix "Bearer "
+        String jwtToken = token.substring(7);
         String roleName;
         try {
-            // Giải mã token và lấy role
             Claims claims = Jwts.parser()
                     .setSigningKey(jwtSecret)
                     .parseClaimsJws(jwtToken)
                     .getBody();
-            roleName = claims.get("role", String.class); // Lấy role từ token
+            roleName = claims.get("role", String.class);
         } catch (Exception e) {
             log.error("Failed to decode token", e);
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
             return;
         }
 
-        // Truy vấn roleId từ roleName
         Long roleId = permissionService.findRoleIdByRoleName(roleName);
         if (roleId == null) {
             log.warn("Role '{}' does not exist in the system.", roleName);
@@ -55,7 +53,6 @@ public class AuthorizationFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Kiểm tra quyền truy cập vào resource
         String resource = request.getRequestURI();
         String method = request.getMethod();
 
@@ -65,7 +62,6 @@ public class AuthorizationFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Cho phép tiếp tục nếu quyền hợp lệ
         filterChain.doFilter(request, response);
     }
 }

@@ -12,10 +12,9 @@ import org.aibles.course.repository.CourseRepository;
 import org.aibles.course.repository.StudentCourseRepository;
 import org.aibles.course.service.StudentCourseService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -29,14 +28,17 @@ public class StudentCourseServiceImpl implements StudentCourseService {
     private final StudentCourseRepository studentCourseRepository;
     private final CourseRepository courseRepository;
     private final RestTemplate restTemplate;
+    private final String studentServiceUrl;
 
     @Autowired
     public StudentCourseServiceImpl(StudentCourseRepository studentCourseRepository,
                                     CourseRepository courseRepository,
-                                    RestTemplate restTemplate) {
+                                    RestTemplate restTemplate,
+                                    @Value("${student.service.url}") String studentServiceUrl) {
         this.studentCourseRepository = studentCourseRepository;
         this.courseRepository = courseRepository;
         this.restTemplate = restTemplate;
+        this.studentServiceUrl = studentServiceUrl;
     }
 
     @Override
@@ -44,13 +46,9 @@ public class StudentCourseServiceImpl implements StudentCourseService {
     public StudentCourseResponseDTO create(StudentCourseRequestDTO studentCourseRequestDTO) {
         log.info("(createStudentCourse) Start - studentCourseRequestDTO: {}", studentCourseRequestDTO);
 
-        // Kiểm tra sự tồn tại của student thông qua RestTemplate
-        checkExistence("http://STUDENT-SERVICE/api/v1/students/" + studentCourseRequestDTO.getStudentId(), InstructorCode.STUDENT_NOT_FOUND);
-
-        // Kiểm tra sự tồn tại của course trực tiếp trong cơ sở dữ liệu
+        checkExistence(studentServiceUrl + "/" + studentCourseRequestDTO.getStudentId(), InstructorCode.STUDENT_NOT_FOUND);
         checkCourseExists(studentCourseRequestDTO.getCourseId());
 
-        // Tạo mới một bản ghi StudentCourse
         StudentCourse studentCourse = new StudentCourse();
         studentCourse.setStudentId(studentCourseRequestDTO.getStudentId());
         studentCourse.setCourseId(studentCourseRequestDTO.getCourseId());
@@ -94,9 +92,12 @@ public class StudentCourseServiceImpl implements StudentCourseService {
     private void checkExistence(String url, ResponseStatus errorCode) {
         try {
             restTemplate.getForObject(url, Object.class);
+            log.info("(checkExistence) Verified existence for URL: {}", url);
         } catch (HttpClientErrorException.NotFound e) {
+            log.error("(checkExistence) Resource not found for URL: {}", url);
             throw new BusinessException(errorCode);
         } catch (Exception e) {
+            log.error("(checkExistence) Error verifying existence for URL: {}", url, e);
             throw new BusinessException(InstructorCode.INTERNAL_SERVER_ERROR);
         }
     }
@@ -116,4 +117,3 @@ public class StudentCourseServiceImpl implements StudentCourseService {
         return studentCourseResponseDTO;
     }
 }
-

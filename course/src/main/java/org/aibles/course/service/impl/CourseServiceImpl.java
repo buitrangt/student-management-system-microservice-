@@ -1,7 +1,6 @@
 package org.aibles.course.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
-
 import org.aibles.course.dto.CourseRequestDTO;
 import org.aibles.course.dto.CourseResponseDTO;
 import org.aibles.course.entity.Course;
@@ -10,6 +9,7 @@ import org.aibles.course.exception.InstructorCode;
 import org.aibles.course.exception.ResponseStatus;
 import org.aibles.course.repository.CourseRepository;
 import org.aibles.course.service.CourseService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -25,10 +25,16 @@ public class CourseServiceImpl implements CourseService {
 
     private final CourseRepository courseRepository;
     private final RestTemplate restTemplate;
+    private final String subjectServiceUrl;
+    private final String lecturerServiceUrl;
 
-    public CourseServiceImpl(CourseRepository courseRepository, RestTemplate restTemplate) {
+    public CourseServiceImpl(CourseRepository courseRepository, RestTemplate restTemplate,
+                             @Value("${subject.service.url}") String subjectServiceUrl,
+                             @Value("${lecturer.service.url}") String lecturerServiceUrl) {
         this.courseRepository = courseRepository;
         this.restTemplate = restTemplate;
+        this.subjectServiceUrl = subjectServiceUrl;
+        this.lecturerServiceUrl = lecturerServiceUrl;
     }
 
     @Transactional
@@ -36,14 +42,11 @@ public class CourseServiceImpl implements CourseService {
     public CourseResponseDTO create(CourseRequestDTO courseRequestDTO) {
         log.info("(createCourse) Start - courseRequestDTO: {}", courseRequestDTO);
 
-        // Validate input data
         validateCourseRequest(courseRequestDTO);
 
-        // Check if the subject and lecturer exist
-        checkExistence("http://SUBJECT-SERVICE/api/v1/subjects/" + courseRequestDTO.getSubjectId(), InstructorCode.SUBJECT_NOT_FOUND);
-        checkExistence("http://LECTURER-SERVICE/api/v1/lecturers/" + courseRequestDTO.getLecturerId(), InstructorCode.LECTURER_NOT_FOUND);
+        checkExistence(subjectServiceUrl + "/" + courseRequestDTO.getSubjectId(), InstructorCode.SUBJECT_NOT_FOUND);
+        checkExistence(lecturerServiceUrl + "/" + courseRequestDTO.getLecturerId(), InstructorCode.LECTURER_NOT_FOUND);
 
-        // Create and save the new course
         Course course = new Course();
         course.setCourseName(courseRequestDTO.getCourseName());
         course.setSubjectId(courseRequestDTO.getSubjectId());
@@ -62,18 +65,14 @@ public class CourseServiceImpl implements CourseService {
     public CourseResponseDTO update(int courseId, CourseRequestDTO courseRequestDTO) {
         log.info("(updateCourse) Start - courseId: {}, courseRequestDTO: {}", courseId, courseRequestDTO);
 
-        // Validate input data
         validateCourseRequest(courseRequestDTO);
 
-        // Check if the course exists
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new BusinessException(InstructorCode.COURSE_NOT_FOUND));
 
-        // Check if the subject and lecturer exist
-        checkExistence("http://SUBJECT-SERVICE/api/v1/subjects/" + courseRequestDTO.getSubjectId(), InstructorCode.SUBJECT_NOT_FOUND);
-        checkExistence("http://LECTURER-SERVICE/api/v1/lecturers/" + courseRequestDTO.getLecturerId(), InstructorCode.LECTURER_NOT_FOUND);
+        checkExistence(subjectServiceUrl + "/" + courseRequestDTO.getSubjectId(), InstructorCode.SUBJECT_NOT_FOUND);
+        checkExistence(lecturerServiceUrl + "/" + courseRequestDTO.getLecturerId(), InstructorCode.LECTURER_NOT_FOUND);
 
-        // Update course details
         course.setCourseName(courseRequestDTO.getCourseName());
         course.setSubjectId(courseRequestDTO.getSubjectId());
         course.setLecturerId(courseRequestDTO.getLecturerId());
@@ -147,17 +146,18 @@ public class CourseServiceImpl implements CourseService {
         }
     }
 
-    // Phương thức dùng chung để kiểm tra sự tồn tại của subject hoặc lecturer
     private void checkExistence(String url, ResponseStatus errorCode) {
         try {
             restTemplate.getForObject(url, Object.class);
+            log.info("(checkExistence) Verified existence for URL: {}", url);
         } catch (HttpClientErrorException.NotFound e) {
+            log.error("(checkExistence) Resource not found for URL: {}", url);
             throw new BusinessException(errorCode);
         } catch (Exception e) {
+            log.error("(checkExistence) Error verifying existence for URL: {}", url, e);
             throw new BusinessException(InstructorCode.INTERNAL_SERVER_ERROR);
         }
     }
-
 
     private CourseResponseDTO mapToCourseResponseDTO(Course course) {
         log.debug("(mapToCourseResponseDTO) Mapping course to DTO - courseId: {}", course.getCourseId());
@@ -172,4 +172,3 @@ public class CourseServiceImpl implements CourseService {
         return courseResponseDTO;
     }
 }
-
