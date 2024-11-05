@@ -10,6 +10,7 @@ import org.aibles.grade.exception.InstructorCode;
 import org.aibles.grade.exception.ResponseStatus;
 import org.aibles.grade.repository.GradeRepository;
 import org.aibles.grade.service.GradeService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -24,10 +25,16 @@ public class GradeServiceImpl implements GradeService {
 
     private final GradeRepository gradeRepository;
     private final RestTemplate restTemplate;
+    private final String studentServiceUrl;
+    private final String courseServiceUrl;
 
-    public GradeServiceImpl(GradeRepository gradeRepository, RestTemplate restTemplate) {
+    public GradeServiceImpl(GradeRepository gradeRepository, RestTemplate restTemplate,
+                            @Value("${student.service.url}") String studentServiceUrl,
+                            @Value("${course.service.url}") String courseServiceUrl) {
         this.gradeRepository = gradeRepository;
         this.restTemplate = restTemplate;
+        this.studentServiceUrl = studentServiceUrl;
+        this.courseServiceUrl = courseServiceUrl;
     }
 
     @Transactional
@@ -37,9 +44,8 @@ public class GradeServiceImpl implements GradeService {
 
         validateGradeRequest(gradeRequestDTO);
 
-        // Kiểm tra sự tồn tại của student và course thông qua RestTemplate
-        checkExistence("http://STUDENT-SERVICE/api/v1/students/" + gradeRequestDTO.getStudentId(), InstructorCode.STUDENT_NOT_FOUND);
-        checkExistence("http://COURSE-SERVICE/api/v1/courses/" + gradeRequestDTO.getCourseId(), InstructorCode.COURSE_NOT_FOUND);
+        checkExistence(studentServiceUrl + "/" + gradeRequestDTO.getStudentId(), InstructorCode.STUDENT_NOT_FOUND);
+        checkExistence(courseServiceUrl + "/" + gradeRequestDTO.getCourseId(), InstructorCode.COURSE_NOT_FOUND);
 
         Grade grade = new Grade();
         grade.setStudentId(gradeRequestDTO.getStudentId());
@@ -124,13 +130,15 @@ public class GradeServiceImpl implements GradeService {
     private void checkExistence(String url, ResponseStatus errorCode) {
         try {
             restTemplate.getForObject(url, Object.class);
+            log.info("(checkExistence) Verified existence for URL: {}", url);
         } catch (HttpClientErrorException.NotFound e) {
+            log.error("(checkExistence) Resource not found for URL: {}", url);
             throw new BusinessException(errorCode);
         } catch (Exception e) {
+            log.error("(checkExistence) Error verifying existence for URL: {}", url, e);
             throw new BusinessException(InstructorCode.INTERNAL_SERVER_ERROR);
         }
     }
-
 
     private GradeResponseDTO mapToGradeResponseDTO(Grade grade) {
         log.debug("(mapToGradeResponseDTO) Mapping grade to DTO - studentId: {}, courseId: {}", grade.getStudentId(), grade.getCourseId());
@@ -142,4 +150,3 @@ public class GradeServiceImpl implements GradeService {
         return gradeResponseDTO;
     }
 }
-
