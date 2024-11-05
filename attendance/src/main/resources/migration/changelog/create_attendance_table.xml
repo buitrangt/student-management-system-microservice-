@@ -24,5 +24,81 @@
             </column>
         </createTable>
     </changeSet>
+    <!-- Bảng role -->
+    <changeSet id="2" author="aibles">
+        <createTable tableName="role">
+            <column name="role_id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="description" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+
+    <!-- Bảng permission -->
+    <changeSet id="3" author="aibles">
+        <createTable tableName="permission">
+            <column name="permission_id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="resource" type="VARCHAR(100)" />
+            <column name="method" type="VARCHAR(10)" />
+            <column name="description" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+
+    <!-- Bảng user_role -->
+    <changeSet id="4" author="aibles">
+        <createTable tableName="user_role">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+                baseTableName="user_role"
+                baseColumnNames="role_id"
+                referencedTableName="role"
+                referencedColumnNames="role_id"
+                constraintName="fk_user_role_role_id"/>
+    </changeSet>
+
+    <!-- Bảng role_permission -->
+    <changeSet id="5" author="aibles">
+        <createTable tableName="role_permission">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="role_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="permission_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+                baseTableName="role_permission"
+                baseColumnNames="role_id"
+                referencedTableName="role"
+                referencedColumnNames="role_id"
+                constraintName="fk_role_permission_role_id"/>
+        <addForeignKeyConstraint
+                baseTableName="role_permission"
+                baseColumnNames="permission_id"
+                referencedTableName="permission"
+                referencedColumnNames="permission_id"
+                constraintName="fk_role_permission_permission_id"/>
+    </changeSet>
 
 </databaseChangeLog>
+

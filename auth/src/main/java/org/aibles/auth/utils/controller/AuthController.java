@@ -60,28 +60,6 @@ public class AuthController {
     }
 
 
-    //    @PostMapping("/register")
-//    public ApplicationResponse<String> registerUser(@Valid @RequestBody RegisterUserRequest request) {
-//        log.info("Registering user: {}", request);
-//        User user = UserDtoConverter.toEntity(request);
-//        Account account = AccountDtoConverter.toEntity(request, user);
-//
-//        userService.registerUser(user, account, request.getConfirmPassword());
-//
-//        log.info("Registered User Successfully");
-//        return ApplicationResponse.of(HttpStatus.CREATED.value(), "null");
-//    }
-//
-//    @GetMapping("/{id}")
-//    public ResponseEntity<ApplicationResponse<UserProfileResponse>> getUserProfileById(@PathVariable String id) {
-//        log.info(" === Start api getById UserProfile === ");
-//        log.info(" === Request Body : {} === ", id);
-//        User userEntity = userService.getUserProfileById(id).orElseThrow();
-//        UserProfileResponse response = UserDtoConverter.entityToResponse(userEntity);
-//        ApplicationResponse<UserProfileResponse> applicationResponse = ApplicationResponse.of(HttpStatus.OK.value(), response);
-//        log.info(" === Finish api getById, userProfile Id : {} === ", response.getId());
-//        return new ResponseEntity<>(applicationResponse, HttpStatus.OK);
-//    }
     @PostMapping("/login")
     public ResponseEntity<ApplicationResponse<LoginResponse>> login(
             @Valid @RequestBody LoginRequest loginRequest) {

@@ -9,6 +9,7 @@ import org.aibles.student.exception.InstructorCode;
 import org.aibles.student.repository.StudentRepository;
 import org.aibles.student.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -23,27 +24,25 @@ public class StudentServiceImpl implements StudentService {
 
     private final StudentRepository studentRepository;
     private final RestTemplate restTemplate;
+    private final String classServiceUrl;
 
     @Autowired
-    public StudentServiceImpl(StudentRepository studentRepository, RestTemplate restTemplate) {
+    public StudentServiceImpl(StudentRepository studentRepository, RestTemplate restTemplate,
+                              @Value("${class.service.url}") String classServiceUrl) {
         this.studentRepository = studentRepository;
         this.restTemplate = restTemplate;
+        this.classServiceUrl = classServiceUrl;
     }
 
-    /**
-     * Tạo mới một Student.
-     */
     @Override
     @Transactional
     public StudentResponse create(StudentRequest studentRequestDTO) {
         log.info("(createStudent) Start - studentRequestDTO: {}", studentRequestDTO);
-//
-//        // Kiểm tra sự tồn tại của classId thông qua RestTemplate
+
         checkClassExists(studentRequestDTO.getClassId());
 
         Student student = new Student();
         student.setUserId(studentRequestDTO.getUserId());
-       // Gán userId từ Auth Service
         student.setFullName(studentRequestDTO.getFullName());
         student.setDateOfBirth(studentRequestDTO.getDateOfBirth());
         student.setGender(Student.Gender.valueOf(studentRequestDTO.getGender()));
@@ -58,11 +57,8 @@ public class StudentServiceImpl implements StudentService {
         return mapToStudentResponseDTO(savedStudent);
     }
 
-    /**
-     * Kiểm tra sự tồn tại của classId trong Class Service.
-     */
     private void checkClassExists(Integer classId) {
-        String classUrl = "http://CLASS-SERVICE/api/v1/classes/" + classId;
+        String classUrl = classServiceUrl + "/" + classId;
         try {
             restTemplate.getForObject(classUrl, Object.class);
             log.info("(checkClassExists) Class found - classId: {}", classId);
@@ -75,9 +71,6 @@ public class StudentServiceImpl implements StudentService {
         }
     }
 
-    /**
-     * Lấy tất cả các Student.
-     */
     @Override
     @Transactional(readOnly = true)
     public List<StudentResponse> getAll() {
@@ -87,9 +80,6 @@ public class StudentServiceImpl implements StudentService {
         return students.stream().map(this::mapToStudentResponseDTO).collect(Collectors.toList());
     }
 
-    /**
-     * Lấy thông tin một Student theo studentId.
-     */
     @Override
     @Transactional(readOnly = true)
     public StudentResponse getById(int studentId) {
@@ -103,15 +93,11 @@ public class StudentServiceImpl implements StudentService {
         return mapToStudentResponseDTO(student);
     }
 
-    /**
-     * Cập nhật thông tin của một Student.
-     */
     @Override
     @Transactional
     public StudentResponse update(int studentId, StudentRequest studentRequestDTO) {
         log.info("(updateStudent) Start - studentId: {}", studentId);
 
-        // Kiểm tra sự tồn tại của classId thông qua RestTemplate
         checkClassExists(studentRequestDTO.getClassId());
 
         Student student = studentRepository.findById(studentId)
@@ -120,7 +106,7 @@ public class StudentServiceImpl implements StudentService {
                     return new BusinessException(InstructorCode.STUDENT_NOT_FOUND);
                 });
 
-        student.setUserId(studentRequestDTO.getUserId());  // Cập nhật userId nếu cần
+        student.setUserId(studentRequestDTO.getUserId());
         student.setFullName(studentRequestDTO.getFullName());
         student.setDateOfBirth(studentRequestDTO.getDateOfBirth());
         student.setGender(Student.Gender.valueOf(studentRequestDTO.getGender()));
@@ -134,9 +120,6 @@ public class StudentServiceImpl implements StudentService {
         return mapToStudentResponseDTO(updatedStudent);
     }
 
-    /**
-     * Xóa một Student theo studentId.
-     */
     @Override
     @Transactional
     public void delete(int studentId) {
@@ -150,13 +133,10 @@ public class StudentServiceImpl implements StudentService {
         log.info("(deleteStudent) Successfully deleted student - studentId: {}", studentId);
     }
 
-    /**
-     * Map dữ liệu từ Entity Student sang DTO StudentResponse.
-     */
     private StudentResponse mapToStudentResponseDTO(Student student) {
         StudentResponse studentResponseDTO = new StudentResponse();
         studentResponseDTO.setStudentId(student.getStudentId());
-        studentResponseDTO.setUserId(student.getUserId());  // Map userId
+        studentResponseDTO.setUserId(student.getUserId());
         studentResponseDTO.setFullName(student.getFullName());
         studentResponseDTO.setDateOfBirth(student.getDateOfBirth());
         studentResponseDTO.setGender(student.getGender().name());

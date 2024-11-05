@@ -29,9 +29,9 @@ public class WebfluxSecurityConfiguration {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange
-                        .pathMatchers(REGISTER_CUSTOMER, ACTIVE_CUSTOMER,VERIFY_OTP_CUSTOMER).permitAll()
+                        .pathMatchers(REGISTER_CUSTOMER, ACTIVE_CUSTOMER, VERIFY_OTP_CUSTOMER).permitAll()
                         .anyExchange().authenticated())
-                .addFilterBefore(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
+                .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(authenticationErrorHandle))
                 .build();

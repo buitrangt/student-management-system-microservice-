@@ -18,17 +18,20 @@ eureka:
     prefer-ip-address: true
 
   application:
-    name: student-service  # Tên của dịch vụ khi đăng ký với Eureka
+    name: student-service
   cloud:
     eureka:
       client:
         service-url:
-          defaultZone: http://localhost:8761/eureka/  # Địa chỉ Eureka Server
+          defaultZone: http://localhost:8761/eureka/
       instance:
-        prefer-ip-address: true  # Sử dụng địa chỉ IP thay vì hostname
+        prefer-ip-address: true
 
 server:
   port: 8087
 
 
 Secret: 03295e54e2aa5f1f5ca7bc3762f3a35684ae625d64cc644534e2ce8504a46539
+class:
+  service:
+    url=http://localhost:8089/api/v1/classes:
