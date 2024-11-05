@@ -9,6 +9,7 @@ import org.aibles.classservice.exception.InstructorCode;
 import org.aibles.classservice.exception.ResponseStatus;
 import org.aibles.classservice.repository.ClassRepository;
 import org.aibles.classservice.service.ClassService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -24,10 +25,13 @@ public class ClassServiceImpl implements ClassService {
 
     private final ClassRepository classRepository;
     private final RestTemplate restTemplate;
+    private final String departmentServiceUrl;
 
-    public ClassServiceImpl(ClassRepository classRepository, RestTemplate restTemplate) {
+    public ClassServiceImpl(ClassRepository classRepository, RestTemplate restTemplate,
+                            @Value("${department.service.url}") String departmentServiceUrl) {
         this.classRepository = classRepository;
         this.restTemplate = restTemplate;
+        this.departmentServiceUrl = departmentServiceUrl;
     }
 
     @Override
@@ -37,8 +41,7 @@ public class ClassServiceImpl implements ClassService {
 
         validateClassRequest(classRequestDTO);
 
-        // Kiểm tra sự tồn tại của department thông qua RestTemplate
-        checkExistence("http://DEPARTMENT-SERVICE/api/v1/departments/" + classRequestDTO.getDepartmentId(), InstructorCode.DEPARTMENT_NOT_FOUND);
+        checkExistence(departmentServiceUrl + "/" + classRequestDTO.getDepartmentId(), InstructorCode.DEPARTMENT_NOT_FOUND);
 
         ClassEntity classEntity = new ClassEntity();
         classEntity.setClassName(classRequestDTO.getClassName());
@@ -53,9 +56,12 @@ public class ClassServiceImpl implements ClassService {
     private void checkExistence(String url, ResponseStatus errorCode) {
         try {
             restTemplate.getForObject(url, Object.class);
+            log.info("(checkExistence) Successfully verified existence for URL: {}", url);
         } catch (HttpClientErrorException.NotFound e) {
+            log.error("(checkExistence) Resource not found for URL: {}", url);
             throw new BusinessException(errorCode);
         } catch (Exception e) {
+            log.error("(checkExistence) Error verifying existence for URL: {}", url, e);
             throw new BusinessException(InstructorCode.INTERNAL_SERVER_ERROR);
         }
     }
@@ -70,8 +76,7 @@ public class ClassServiceImpl implements ClassService {
         ClassEntity classEntity = classRepository.findById(classId)
                 .orElseThrow(() -> new BusinessException(InstructorCode.CLASS_NOT_FOUND));
 
-        // Kiểm tra sự tồn tại của department thông qua RestTemplate
-        checkExistence("http://DEPARTMENT-SERVICE/api/v1/departments/" + classRequestDTO.getDepartmentId(), InstructorCode.DEPARTMENT_NOT_FOUND);
+        checkExistence(departmentServiceUrl + "/" + classRequestDTO.getDepartmentId(), InstructorCode.DEPARTMENT_NOT_FOUND);
 
         classEntity.setClassName(classRequestDTO.getClassName());
         classEntity.setDepartmentId(classRequestDTO.getDepartmentId());
@@ -134,13 +139,7 @@ public class ClassServiceImpl implements ClassService {
     }
 
     private void validateClassRequest(ClassRequestDTO classRequestDTO) {
-        if (classRequestDTO == null) {
-            throw new BusinessException(InstructorCode.INVALID_REQUEST);
-        }
-        if (!StringUtils.hasText(classRequestDTO.getClassName())) {
-            throw new BusinessException(InstructorCode.INVALID_REQUEST);
-        }
-        if (classRequestDTO.getDepartmentId() == null) {
+        if (classRequestDTO == null || !StringUtils.hasText(classRequestDTO.getClassName()) || classRequestDTO.getDepartmentId() == null) {
             throw new BusinessException(InstructorCode.INVALID_REQUEST);
         }
     }
@@ -153,4 +152,3 @@ public class ClassServiceImpl implements ClassService {
         return responseDTO;
     }
 }
-

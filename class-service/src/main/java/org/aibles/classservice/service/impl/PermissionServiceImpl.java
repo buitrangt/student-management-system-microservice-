@@ -37,10 +37,8 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     public boolean hasAccess(Long roleId, String resource, String method) {
-        // Tìm Permission dựa trên resource và method
         Permission permission = permissionRepository.findByResourceAndMethod(resource, method);
 
-        // Kiểm tra xem roleId có quyền truy cập permission này không
         return permission != null && rolePermissionRepository.existsByRoleIdAndPermissionId(roleId, permission.getId());
     }
 
