@@ -29,7 +29,9 @@ eureka:
 
 server:
   port: 8082
-
+class:
+  service:
+    url= http://localhost:8089/api/v1/classes
 
 
 Secret: 03295e54e2aa5f1f5ca7bc3762f3a35684ae625d64cc644534e2ce8504a46539
