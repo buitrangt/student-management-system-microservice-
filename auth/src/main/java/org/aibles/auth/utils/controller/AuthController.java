@@ -1,6 +1,5 @@
 package org.aibles.auth.utils.controller;
 
-
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.aibles.auth.utils.controller.converter.AccountDtoConverter;
@@ -28,11 +27,12 @@ public class AuthController {
     private final LoginService loginService;
     private final JWTService jwtService;
 
-   public AuthController(final UserService userService, final LoginService loginService, final JWTService jwtService) {
-       this.userService = userService;
-       this.loginService = loginService;
-       this.jwtService = jwtService;
-   }
+    public AuthController(final UserService userService, final LoginService loginService, final JWTService jwtService) {
+        this.userService = userService;
+        this.loginService = loginService;
+        this.jwtService = jwtService;
+    }
+
     @PostMapping("/register/student")
     public ApplicationResponse<String> registerStudent(@Valid @RequestBody RegisterUserRequest request) {
         log.info("Registering student: {}", request);
@@ -58,7 +58,6 @@ public class AuthController {
         log.info("Registered Lecturer Successfully");
         return ApplicationResponse.of(HttpStatus.CREATED.value(), "Lecturer registered successfully.");
     }
-
 
     @PostMapping("/login")
     public ResponseEntity<ApplicationResponse<LoginResponse>> login(
@@ -91,4 +90,17 @@ public class AuthController {
         return ResponseEntity.ok(ApplicationResponse.of(HttpStatus.OK.value(), response));
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<ApplicationResponse<String>> logout(@RequestHeader("Authorization") String authorizationHeader) {
+        log.info("=== Start API logout ===");
+
+        String accessToken = authorizationHeader.replace("Bearer ", "");
+
+        loginService.logout(accessToken);
+
+        log.info("Logout successful for token: {}", accessToken);
+        log.info("=== Finish API logout ===");
+
+        return ResponseEntity.ok(ApplicationResponse.of(HttpStatus.OK.value(), "Logout successful"));
+    }
 }

@@ -8,4 +8,5 @@ public interface JWTService {
     String generateAccessToken(Account account);
     String generateRefreshToken(Account account);
     VerifyTokenResponse verifyToken(VerifyTokenRequest request);
+    String getUsernameFromToken(String token);
 }

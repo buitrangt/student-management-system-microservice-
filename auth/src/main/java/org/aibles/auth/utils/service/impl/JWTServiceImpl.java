@@ -60,9 +60,18 @@ public class JWTServiceImpl implements JWTService {
             boolean isValid = !claims.getExpiration().before(new Date());
             return new VerifyTokenResponse(isValid, isValid ? "Token is valid" : "Token has expired");
         } catch (JwtException | IllegalArgumentException e) {
-            log.info("Token verification failed: {}", e.getMessage()); // log chi tiết lỗi
+            log.info("Token verification failed: {}", e.getMessage());
             return new VerifyTokenResponse(false, "Invalid token");
         }
+    }
+
+    @Override
+    public String getUsernameFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(jwtSecret)
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.get("username", String.class);
     }
 
 

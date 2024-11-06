@@ -10,6 +10,7 @@ import org.aibles.auth.utils.helper.RedisService;
 import org.aibles.auth.utils.repository.AccountRepository;
 import org.aibles.auth.utils.service.JWTService;
 import org.aibles.auth.utils.service.LoginService;
+import org.aibles.auth.utils.service.TokenService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,61 +24,61 @@ import java.util.Map;
 @Service
 @Transactional
 public class LoginServiceImpl implements LoginService {
+
     private final AccountRepository accountRepository;
     private final RedisService redisService;
     private final JWTService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final TokenService tokenService;
 
-    @Value("${expirationMs:}")
+    @Value("${expirationMs:3600000}")
     private Long jwtExpirationMs;
-    @Value("${refreshExpirationMs:}")
+
+    @Value("${refreshExpirationMs:86400000}")
     private Long jwtRefreshExpirationMs;
 
-    public LoginServiceImpl(AccountRepository accountRepository, RedisService redisService, JWTService jwtService, PasswordEncoder passwordEncoder) {
+    public LoginServiceImpl(AccountRepository accountRepository, RedisService redisService, JWTService jwtService,
+                            PasswordEncoder passwordEncoder, TokenService tokenService) {
         this.accountRepository = accountRepository;
         this.redisService = redisService;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
+        this.tokenService = tokenService;
     }
 
     @Override
     public Map<String, Object> login(String username, String password) {
         log.info("Login request for username: {}", username);
 
-        // Tìm tài khoản theo tên người dùng
         Account account = accountRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("username: ", username));
 
-        // Kiểm tra xem tài khoản có bị khóa tạm thời hay không
-        Long unlockTime = redisService.getOrDefault(CommonConstants.UNLOCK_TIME_KEY + username,
-                username, null);
-
+        Long unlockTime = redisService.getOrDefault(CommonConstants.UNLOCK_TIME_KEY + username, username, null);
         if (unlockTime != null && Instant.now().getEpochSecond() < unlockTime) {
             log.info("Account is temporarily locked: {}", username);
-            throw new ResourceNotFoundException("username: ",username);
+            throw new BadRequestException("Account is temporarily locked");
         }
 
-        // Xác minh mật khẩu
         if (!passwordEncoder.matches(password, account.getPassword())) {
             log.info("Password does not match for username: {}", username);
             incrementFailedLoginAttempts(username);
-            throw new ResourceNotFoundException("username: ",username);
+            throw new PasswordNotMatchException("Password does not match");
         }
 
-        // Xóa các lần đăng nhập thất bại trong Redis
         redisService.delete(CommonConstants.FAILED_PASSWORD_ATTEMPT_KEY, username);
 
-        // Tạo các mã thông báo
         String accessToken = jwtService.generateAccessToken(account);
         String refreshToken = jwtService.generateRefreshToken(account);
 
-        // Lưu trữ mã thông báo vào Redis
+        String userId = account.getUserId();
+        long expiresAt = Instant.now().getEpochSecond() + jwtExpirationMs;
+        tokenService.saveToken(userId, accessToken, expiresAt);
+
         redisService.saveWithExpire(username, CommonConstants.ACCESS_TOKEN_HASH_KEY, accessToken, jwtExpirationMs);
         redisService.saveWithExpire(username, CommonConstants.REFRESH_TOKEN_HASH_KEY, refreshToken, jwtRefreshExpirationMs);
 
         log.info("Login successful for username: {}", username);
 
-        // Trả về các mã thông báo trong một Map
         Map<String, Object> tokens = new HashMap<>();
         tokens.put("accessToken", accessToken);
         tokens.put("refreshToken", refreshToken);
@@ -91,11 +92,9 @@ public class LoginServiceImpl implements LoginService {
         Integer attempts = redisService.getOrDefault(CommonConstants.FAILED_PASSWORD_ATTEMPT_KEY, username, 0);
         log.info("Current failed login attempts for {}: {}", username, attempts);
 
-        // Tăng số lần thử đăng nhập thất bại
         attempts += 1;
         redisService.save(CommonConstants.FAILED_PASSWORD_ATTEMPT_KEY, username, attempts);
 
-        // Khóa tạm thời sau 5 và 10 lần đăng nhập sai, khóa vĩnh viễn sau 15 lần
         if (attempts == 5) {
             lockTemporarily(username, CommonConstants.FIVE_MINUTES, "5");
         } else if (attempts == 10) {
@@ -121,11 +120,31 @@ public class LoginServiceImpl implements LoginService {
         Account account = accountRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("username: ", username));
 
-        // Xóa thời gian mở khóa tạm thời và đặt trạng thái khóa vĩnh viễn cho tài khoản
         redisService.delete(CommonConstants.UNLOCK_TIME_KEY + username, username);
         account.setLockPermanent(true);
         accountRepository.save(account);
+
+        tokenService.revokeAllTokensForUser(account.getUserId());
+
         log.info("Account permanently locked due to 15 failed login attempts: {}", username);
         throw new BadRequestException("Account permanently locked due to 15 failed login attempts");
     }
+
+    @Override
+    public void logout(String accessToken) {
+        log.info("Logout request for token: {}", accessToken);
+
+        if (!tokenService.isTokenValid(accessToken)) {
+            throw new BadRequestException("Token không hợp lệ hoặc đã hết hạn");
+        }
+
+        tokenService.revokeToken(accessToken);
+
+        String username = jwtService.getUsernameFromToken(accessToken);
+        redisService.delete(CommonConstants.ACCESS_TOKEN_HASH_KEY, username);
+
+        log.info("Logout successful for token: {}", accessToken);
+    }
+
+
 }
