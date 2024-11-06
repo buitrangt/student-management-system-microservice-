@@ -38,6 +38,8 @@ public class RouteConfig {
                         .uri("lb://AUTH-SERVICE"))
                 .route("auth-service-verify-token-route", r -> r.path("/api/v1/users/verify-token")
                         .uri("lb://AUTH-SERVICE"))
+                .route("auth-service-logout", r -> r.path("/api/v1/users/logout")
+                        .uri("lb://AUTH-SERVICE"))
 
                 .build();
     }

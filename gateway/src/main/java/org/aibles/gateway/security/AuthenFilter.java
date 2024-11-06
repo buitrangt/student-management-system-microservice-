@@ -33,7 +33,8 @@ public class AuthenFilter implements WebFilter {
     private static final List<String> EXCLUDED_PATHS = Arrays.asList(
             "/api/v1/users/register",
             "/api/v1/users/login",
-            "/api/v1/users/verify-token"
+            "/api/v1/users/verify-token",
+            "/api/v1/users/logout"
     );
 
     @Override

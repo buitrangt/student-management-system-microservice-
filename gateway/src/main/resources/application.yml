@@ -8,11 +8,6 @@ spring:
   main:
     allow-bean-definition-overriding: true
 
-
-
-
-
-
   cloud:
     gateway:
       routes:
@@ -46,10 +41,10 @@ spring:
             - Path=/api/v1/subjects
           filters:
             - StripPrefix=2
-        - id: lecture-service-route
-          uri: lb://SUBJECT-SERVICE
+        - id: lecturer-service-route
+          uri: lb://LECTURER-SERVICE
           predicates:
-            - Path=/api/v1/lectures
+            - Path=/api/v1/lecturers
           filters:
             - StripPrefix=2
         - id: class-service-route
@@ -94,6 +89,12 @@ spring:
             - Path=/api/v1/users/verify-token
           filters:
             - StripPrefix=2
+        - id: auth-service-logout
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/api/v1/users/logout
+          filters:
+            - StripPrefix=2
 
 eureka:
   client:
@@ -102,6 +103,5 @@ eureka:
     fetchRegistry: true
     registerWithEureka: true
 
-Secret: 03295e54e2aa5f1f5ca7bc3762f3a35684ae625d64cc644534e2ce8504a46539
 
-
+secret: ${JWT_SECRET}
