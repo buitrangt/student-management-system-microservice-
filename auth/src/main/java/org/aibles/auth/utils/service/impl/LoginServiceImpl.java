@@ -74,8 +74,6 @@ public class LoginServiceImpl implements LoginService {
         long expiresAt = Instant.now().getEpochSecond() + jwtExpirationMs;
         tokenService.saveToken(userId, accessToken, expiresAt);
 
-        redisService.saveWithExpire(username, CommonConstants.ACCESS_TOKEN_HASH_KEY, accessToken, jwtExpirationMs);
-        redisService.saveWithExpire(username, CommonConstants.REFRESH_TOKEN_HASH_KEY, refreshToken, jwtRefreshExpirationMs);
 
         log.info("Login successful for username: {}", username);
 
@@ -135,7 +133,7 @@ public class LoginServiceImpl implements LoginService {
         log.info("Logout request for token: {}", accessToken);
 
         if (!tokenService.isTokenValid(accessToken)) {
-            throw new BadRequestException("Token không hợp lệ hoặc đã hết hạn");
+            throw new BadRequestException("Token is invalid ");
         }
 
         tokenService.revokeToken(accessToken);

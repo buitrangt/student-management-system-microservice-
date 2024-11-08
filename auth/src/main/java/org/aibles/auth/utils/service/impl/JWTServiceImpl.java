@@ -1,9 +1,6 @@
 package org.aibles.auth.utils.service.impl;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import lombok.extern.slf4j.Slf4j;
 import org.aibles.auth.utils.dto.VerifyTokenRequest;
 import org.aibles.auth.utils.dto.VerifyTokenResponse;
@@ -74,6 +71,20 @@ public class JWTServiceImpl implements JWTService {
         return claims.get("username", String.class);
     }
 
-
+    @Override
+    public boolean isTokenExpired(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .setSigningKey(jwtSecret)
+                    .parseClaimsJws(token)
+                    .getBody();
+            Date expiration = claims.getExpiration();
+            return expiration.before(new Date());
+        } catch (ExpiredJwtException e) {
+            return true;
+        } catch (SignatureException e) {
+            throw new RuntimeException("Invalid JWT signature");
+        }
+    }
 
 }

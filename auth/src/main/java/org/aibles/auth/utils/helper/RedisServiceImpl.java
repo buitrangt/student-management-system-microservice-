@@ -23,22 +23,6 @@ public class RedisServiceImpl implements RedisService {
         this.stringRedisTemplate = stringRedisTemplate;
     }
 
-    @Override
-    public void save(String key, Object value, long timeout, TimeUnit unit) {
-        redisTemplate.opsForValue().set(key, value, timeout, unit);
-    }
-
-    @Override
-    public void delete(String key) {
-        redisTemplate.delete(key);
-    }
-
-    @Override
-    public Optional<Object> get(String key) {
-        return Optional.ofNullable(redisTemplate.opsForValue().get(key));
-    }
-
-
 
     @Override
     public void save(String key, String hashKey, Object value) {
@@ -71,22 +55,6 @@ public class RedisServiceImpl implements RedisService {
         stringRedisTemplate.expire(key, timeout, TimeUnit.MINUTES);
         log.info("Saved OTP to Redis - key: {}, hashKey: {}, value: {}, timeout: {}", key, hashKey, value, timeout);
     }
-    @Override
-    public String findOtp(String username, String hashKey) {
-        return getValue(username, hashKey);
-    }
-    @Override
-    public void clearActiveOtp(String username) {
-        stringRedisTemplate.delete(username);
-    }
-    public String getValue(String key, String hashKey) {
-        HashOperations<String, Object, Object> hashOps = stringRedisTemplate.opsForHash();
-        return (String) hashOps.get(key, hashKey);
-    }
 
-    @Override
-    public String findToken(String username, String hashKey) {
-        return getValue(username, hashKey);
-    }
 
 }
