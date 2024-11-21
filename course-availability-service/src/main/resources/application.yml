@@ -1,0 +1,36 @@
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    topic:
+      studentRegistered: student-registered
+    consumer:
+      group-id: course-availability-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  application:
+    name: course-service
+  liquibase:
+    change-log: classpath:migration/master-changelog.xml
+
+
+server:
+  port: 9083
+
+
+
+
+kafka:
+  topic:
+    name:
+      course_created: course-created
+
+
