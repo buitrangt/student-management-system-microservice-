@@ -11,5 +11,6 @@ public class CourseRequestDTO {
     private Integer lecturerId;
     private String semester;
     private String academicYear;
+    private Integer slotsTotal;
 }
 

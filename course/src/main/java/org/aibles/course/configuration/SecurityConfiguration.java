@@ -43,7 +43,7 @@ public class SecurityConfiguration {
                         .requestMatchers("api/v1/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterAfter(authorizationFilter, SecurityContextHolderFilter.class)
+    .addFilterAfter(authorizationFilter, SecurityContextHolderFilter.class)
                 .exceptionHandling(exception -> exception
                         .accessDeniedHandler(accessDeniedHandler()))
                 .build();

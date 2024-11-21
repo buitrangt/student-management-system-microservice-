@@ -8,6 +8,7 @@ import org.aibles.course.entity.StudentCourseId;
 import org.aibles.course.exception.BusinessException;
 import org.aibles.course.exception.InstructorCode;
 import org.aibles.course.exception.ResponseStatus;
+import org.aibles.course.kafka.StudentRegisteredEvent;
 import org.aibles.course.repository.CourseRepository;
 import org.aibles.course.repository.StudentCourseRepository;
 import org.aibles.course.service.StudentCourseService;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.aibles.course.kafka.KafkaProduceService;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,16 +31,19 @@ public class StudentCourseServiceImpl implements StudentCourseService {
     private final CourseRepository courseRepository;
     private final RestTemplate restTemplate;
     private final String studentServiceUrl;
+    private final KafkaProduceService kafkaProduceService;
 
     @Autowired
     public StudentCourseServiceImpl(StudentCourseRepository studentCourseRepository,
                                     CourseRepository courseRepository,
                                     RestTemplate restTemplate,
-                                    @Value("${student.service.url}") String studentServiceUrl) {
+                                    @Value("${student.service.url}") String studentServiceUrl,
+                                    KafkaProduceService kafkaProduceService) {
         this.studentCourseRepository = studentCourseRepository;
         this.courseRepository = courseRepository;
         this.restTemplate = restTemplate;
         this.studentServiceUrl = studentServiceUrl;
+        this.kafkaProduceService =kafkaProduceService;
     }
 
     @Override
@@ -46,9 +51,11 @@ public class StudentCourseServiceImpl implements StudentCourseService {
     public StudentCourseResponseDTO create(StudentCourseRequestDTO studentCourseRequestDTO) {
         log.info("(createStudentCourse) Start - studentCourseRequestDTO: {}", studentCourseRequestDTO);
 
+        // Kiểm tra sinh viên và khóa học tồn tại
         checkExistence(studentServiceUrl + "/" + studentCourseRequestDTO.getStudentId(), InstructorCode.STUDENT_NOT_FOUND);
         checkCourseExists(studentCourseRequestDTO.getCourseId());
 
+        // Tạo bản ghi StudentCourse
         StudentCourse studentCourse = new StudentCourse();
         studentCourse.setStudentId(studentCourseRequestDTO.getStudentId());
         studentCourse.setCourseId(studentCourseRequestDTO.getCourseId());
@@ -57,8 +64,17 @@ public class StudentCourseServiceImpl implements StudentCourseService {
         log.info("(createStudentCourse) Successfully created StudentCourse - studentId: {}, courseId: {}",
                 savedStudentCourse.getStudentId(), savedStudentCourse.getCourseId());
 
+        // Phát sự kiện Kafka
+        StudentRegisteredEvent event = new StudentRegisteredEvent(
+                savedStudentCourse.getCourseId(),
+                savedStudentCourse.getStudentId()
+        );
+        kafkaProduceService.pushMessage("student-registered", event);
+        log.info("(createStudentCourse) Event sent to Kafka - event: {}", event);
+
         return mapToStudentCourseResponseDTO(savedStudentCourse);
     }
+
 
     @Override
     public List<StudentCourseResponseDTO> getAll() {
