@@ -12,11 +12,11 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 public class KafkaProduceServiceImpl implements KafkaProduceService {
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
 
     @Override
-    public void pushMessage(String topic,Object message) {
+    public void pushMessage(String topic,String message) {
         log.info("(send) topic: {}, message: {}", topic, message);
         CompletableFuture.runAsync(() -> {
             kafkaTemplate.send(topic, message);

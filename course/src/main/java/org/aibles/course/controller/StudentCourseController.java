@@ -2,6 +2,7 @@ package org.aibles.course.controller;
 
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.aibles.course.dto.BaseResponse;
 import org.aibles.course.dto.StudentCourseListResponse;
 import org.aibles.course.dto.StudentCourseRequestDTO;
@@ -24,7 +25,7 @@ public class StudentCourseController extends BaseController{
     }
 
     @PostMapping
-    public ResponseEntity<BaseResponse<StudentCourseResponseDTO>> create(@RequestBody StudentCourseRequestDTO studentCourseRequestDTO) {
+    public ResponseEntity<BaseResponse<StudentCourseResponseDTO>> create(@RequestBody StudentCourseRequestDTO studentCourseRequestDTO) throws JsonProcessingException {
         StudentCourseResponseDTO studentCourseResponseDTO = studentCourseService.create(studentCourseRequestDTO);
        return successResponse(studentCourseResponseDTO,HttpStatus.CREATED);
     }

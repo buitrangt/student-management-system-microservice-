@@ -1,5 +1,7 @@
 package org.aibles.course.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.aibles.course.dto.StudentCourseRequestDTO;
 import org.aibles.course.dto.StudentCourseResponseDTO;
@@ -48,7 +50,7 @@ public class StudentCourseServiceImpl implements StudentCourseService {
 
     @Override
     @Transactional
-    public StudentCourseResponseDTO create(StudentCourseRequestDTO studentCourseRequestDTO) {
+    public StudentCourseResponseDTO create(StudentCourseRequestDTO studentCourseRequestDTO) throws JsonProcessingException {
         log.info("(createStudentCourse) Start - studentCourseRequestDTO: {}", studentCourseRequestDTO);
 
         // Kiểm tra sinh viên và khóa học tồn tại
@@ -65,10 +67,13 @@ public class StudentCourseServiceImpl implements StudentCourseService {
                 savedStudentCourse.getStudentId(), savedStudentCourse.getCourseId());
 
         // Phát sự kiện Kafka
-        StudentRegisteredEvent event = new StudentRegisteredEvent(
+        StudentRegisteredEvent studentRegisteredEvent = new StudentRegisteredEvent(
                 savedStudentCourse.getCourseId(),
                 savedStudentCourse.getStudentId()
         );
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        String  event =  objectMapper.writeValueAsString(studentRegisteredEvent);
         kafkaProduceService.pushMessage("student-registered", event);
         log.info("(createStudentCourse) Event sent to Kafka - event: {}", event);
 

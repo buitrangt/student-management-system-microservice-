@@ -9,5 +9,5 @@ public interface KafkaProduceService {
      * @param topic   the Kafka topic
      * @param message the message to be sent
      */
-    void pushMessage(String topic, Object message);
+    void pushMessage(String topic, String message);
 }
