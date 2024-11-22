@@ -1,6 +1,7 @@
 package org.aibles.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.aibles.dto.BaseResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;

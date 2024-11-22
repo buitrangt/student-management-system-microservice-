@@ -1,5 +1,7 @@
 package org.aibles.kafka;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aibles.dto.StudentRegisteredEvent;
@@ -15,10 +17,12 @@ public class CourseAvailabilityListener {
     private final CourseAvailabilityService courseAvailabilityService;
 
     @KafkaListener(topics = "student-registered", groupId = "course-availability-group")
-    public void handleStudentRegisteredEvent(StudentRegisteredEvent event) {
+    public void handleStudentRegisteredEvent(String event) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        StudentRegisteredEvent studentRegisteredEvent = mapper.readValue(event, StudentRegisteredEvent.class);
         log.info("(handleStudentRegisteredEvent) Received event: {}", event);
 
-        courseAvailabilityService.decreaseSlots(event.getCourseId());
+        courseAvailabilityService.decreaseSlots(studentRegisteredEvent.getCourseId());
     }
 }
 
